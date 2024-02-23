@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.awt.Point;
 import java.util.Random;
-// import java.util.Dictionary;
 
 import java.util.Scanner;
 import java.io.File;
@@ -22,10 +21,10 @@ public class Boggle { // Boggle 3.5
     // key: letter, value: all occurrences (indices) of the letter on the board
     private HashMap<Character,ArrayList<Point>> letters;
 
-    /* --- CONSTRUCTORS --- */
+    /* --- CONSTRUCTOR --- */
 
     public Boggle(int size) {
-        points = 0;
+        resetPoints();
         gridSize = size;
         letterGrid = new char[size][size];
         letters = new HashMap<Character,ArrayList<Point>>();
@@ -48,10 +47,13 @@ public class Boggle { // Boggle 3.5
         }
     }
 
-    /* --- WORD METHODS --- */
+    /* --- SETTERS --- */
 
     private void setCurrWord(String word) {
         currWord = word;
+    }
+    private void resetPoints() {
+        points = 0;
     }
 
     /* --- LETTER GRID METHODS --- */
@@ -131,6 +133,7 @@ public class Boggle { // Boggle 3.5
     }
 
     // to avoid using the same letter tile (at an exact index) more than once
+    // adhering to the game contraints
     private boolean notVisited(int x, int y, boolean[][] visitedGrid) {
         return visitedGrid[x][y] == false;
     }
@@ -141,6 +144,30 @@ public class Boggle { // Boggle 3.5
 
     /* ------------------ */
 
+    public void searchForWords() throws IOException {
+
+        Scanner sc = new Scanner(new File("4000-most-common-english-words.csv"));  
+        String word = "";
+        
+        sc.nextLine(); // line 1 has a link; sc is now at the start of line 2
+
+        while (sc.hasNext()) { 
+            word = sc.nextLine();
+            char firstChar = word.charAt(0);
+            // The longest possible word is n*n (using all of the tiles on the letter grid)
+            // Only consider words that start with one of the letters on the letter grid -
+            // otherwise what tile are you starting on ?
+            if ( (word.length() <= (gridSize*gridSize)) && (letters.containsKey(firstChar)) ) {
+                for (Point p : letters.get(firstChar)) {
+                    setCurrWord(word);
+                    findPath(currWord,p,createVisitedGrid(),createPath());
+                }
+            }
+        }
+        System.out.println("\n" + points + " points :D");
+        sc.close();
+    }
+
     private void findPath(String substr, Point point, boolean[][] visitedGrid, ArrayList<Point> path) {
         
         // Letter at the curr coordinate is valid 
@@ -148,7 +175,7 @@ public class Boggle { // Boggle 3.5
         // > Following letters are valid; findPath() recursive call wouldn't have been reached otherwise
 
         // Since the letter at the curr coordinate is valid
-        // 1. Its position in visitedGrid[][] must be marked as true (as in it's been used)
+        // 1. Its position in visitedGrid[][] must be marked as true (as it's been used/traversed)
         // 2. It must be added to the path of the curr word trying to formed
 
         // updating data structures
@@ -213,30 +240,6 @@ public class Boggle { // Boggle 3.5
             (substr.charAt(1) == letterGrid[currRow+1][currCol+1])) {
             findPath(substr.substring(1),new Point(currRow+1,currCol+1),copyOfVisitedGrid(visitedGrid), copyOfPath(path));
         }
-    }
-
-    public void searchForWords() throws IOException {
-
-        Scanner sc = new Scanner(new File("4000-most-common-english-words.csv"));  
-        String word = "";
-        
-        sc.nextLine(); // line 1 has a link; sc is now at the start of line 2
-
-        while (sc.hasNext()) { 
-            word = sc.nextLine();
-            char firstChar = word.charAt(0);
-            // The longest possible word is nxn (using all of the tiles on the letter grid)
-            // Only consider words that start with one of the letters on the letter grid -
-            // otherwise what tile are you starting on ?
-            if ( (word.length() <= (gridSize*gridSize)) && (letters.containsKey(firstChar)) ) {
-                for (Point p : letters.get(firstChar)) {
-                    setCurrWord(word);
-                    findPath(currWord,p,createVisitedGrid(),createPath());
-                }
-            }
-        }
-        System.out.println("\n" + points + " points :D");
-        sc.close();
     }
 
     private void calculatePoints(String word) {
