@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.IOException;
 
 
-public class Boggle { // Boggle 3.5
+public class Boggle {
 
     private String currWord;
     private int points, gridSize;
@@ -127,13 +127,12 @@ public class Boggle { // Boggle 3.5
 
     /* --- CONDITIONS/CONSTRAINTS --- */
 
-    // to avoid going out of bounds
+    // to avoid array indexing that's out of bounds
     private boolean isWithinBounds(int x, int y) {
         return (x >= 0 && x < gridSize) && (y >= 0 && y < gridSize);
     }
 
     // to avoid using the same letter tile (at an exact index) more than once
-    // adhering to the game contraints
     private boolean notVisited(int x, int y, boolean[][] visitedGrid) {
         return visitedGrid[x][y] == false;
     }
@@ -148,9 +147,8 @@ public class Boggle { // Boggle 3.5
 
         Scanner sc = new Scanner(new File("4000-most-common-english-words.csv"));  
         String word = "";
-        
-        sc.nextLine(); // line 1 has a link; sc is now at the start of line 2
 
+        // reading file
         while (sc.hasNext()) { 
             word = sc.nextLine();
             char firstChar = word.charAt(0);
@@ -175,7 +173,7 @@ public class Boggle { // Boggle 3.5
         // > Following letters are valid; findPath() recursive call wouldn't have been reached otherwise
 
         // Since the letter at the curr coordinate is valid
-        // 1. Its position in visitedGrid[][] must be marked as true (as it's been used/traversed)
+        // 1. Its position in visitedGrid[][] must be marked as true (since it's been used/traversed)
         // 2. It must be added to the path of the curr word trying to formed
 
         // updating data structures
@@ -191,7 +189,21 @@ public class Boggle { // Boggle 3.5
             return;
         }
 
-        // recursive cases
+        // 8 recursive cases
+
+        // Copies of visitedGrid & path are passed in the recursive calls
+        // This takes care of cases where the path of a word diverges (at a certain letter)
+    
+        // ie.
+        // [a][t]
+        // [t][n]
+    
+        // There are 2 possible unique paths for the word ant, diverging after (0,0),(1,1)
+        // If both recursive calls (going up from n or going left from n) reference the *same*
+        // array objects, the record of the second path will, in turn, be messed up
+        //  > Going up from n: (0,0),(1,1),(0,1); path is updated 
+        //  > Going left from n: (0,0),(1,1),(1,0); but since it's referencing the same path
+        //    as the previous recursive call, path is updated to contain (0,0),(1,1),(0,1),(1,0)
 
         // top-left
         if (isValidTile(currRow-1,currCol-1,visitedGrid) &&
